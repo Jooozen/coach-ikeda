@@ -39,7 +39,7 @@ export interface Player {
   updated_at: Timestamp;
 }
 
-export type PlayerInsert = Omit<Player, "id" | "created_at" | "updated_at"> & {
+export type PlayerInsert = Omit<Player, "id" | "created_at" | "updated_at" | "is_active"> & {
   is_active?: number;
 };
 
