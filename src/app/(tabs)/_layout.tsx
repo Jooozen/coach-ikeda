@@ -25,6 +25,7 @@ export default function TabLayout() {
         name="game"
         options={{
           title: "試合",
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="basketball-outline" size={size} color={color} />
           ),
