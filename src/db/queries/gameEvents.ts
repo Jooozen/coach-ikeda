@@ -59,6 +59,17 @@ export async function getEventsByGameId(gameId: string): Promise<GameEvent[]> {
   );
 }
 
+export async function getEventsByGameAndTeam(
+  gameId: string,
+  teamId: string
+): Promise<GameEvent[]> {
+  const db = await getDatabase();
+  return db.getAllAsync<GameEvent>(
+    "SELECT * FROM game_events WHERE game_id = ? AND team_id = ? ORDER BY quarter ASC, created_at ASC;",
+    [gameId, teamId]
+  );
+}
+
 export async function getEventsByGameAndQuarter(
   gameId: string,
   quarter: number

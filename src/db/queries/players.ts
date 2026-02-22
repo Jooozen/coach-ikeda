@@ -9,23 +9,38 @@ export async function createPlayer(data: PlayerInsert): Promise<Player> {
   const id = generateUUID();
   const now = nowISO();
   const isActive = data.is_active ?? 1;
+  const name = data.name ?? "";
 
   await db.runAsync(
     `INSERT INTO players (id, team_id, name, number, position, is_active, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
-    [id, data.team_id, data.name, data.number, data.position ?? null, isActive, now, now]
+    [id, data.team_id, name, data.number, data.position ?? null, isActive, now, now]
   );
 
   return {
     id,
     team_id: data.team_id,
-    name: data.name,
+    name,
     number: data.number,
     position: data.position ?? null,
     is_active: isActive,
     created_at: now,
     updated_at: now,
   };
+}
+
+/** 背番号だけで素早く選手を登録する（相手チーム選手向け） */
+export async function createPlayerQuick(
+  teamId: string,
+  number: number,
+  name?: string
+): Promise<Player> {
+  return createPlayer({
+    team_id: teamId,
+    number,
+    name: name ?? "",
+    position: null,
+  });
 }
 
 export async function getPlayerById(id: string): Promise<Player | null> {

@@ -16,7 +16,7 @@ export const CREATE_PLAYERS = `
 CREATE TABLE IF NOT EXISTS players (
   id          TEXT PRIMARY KEY,
   team_id     TEXT NOT NULL REFERENCES teams(id),
-  name        TEXT NOT NULL,
+  name        TEXT DEFAULT '',
   number      INTEGER NOT NULL,
   position    TEXT,
   is_active   INTEGER DEFAULT 1,
@@ -66,6 +66,7 @@ export const CREATE_GAME_LINEUPS = `
 CREATE TABLE IF NOT EXISTS game_lineups (
   id             TEXT PRIMARY KEY,
   game_id        TEXT NOT NULL REFERENCES games(id),
+  team_id        TEXT NOT NULL REFERENCES teams(id),
   player_id      TEXT NOT NULL REFERENCES players(id),
   quarter        INTEGER NOT NULL,
   check_in_time  TEXT,
@@ -78,6 +79,7 @@ export const CREATE_PLAYER_GAME_STATS = `
 CREATE TABLE IF NOT EXISTS player_game_stats (
   id            TEXT PRIMARY KEY,
   game_id       TEXT NOT NULL REFERENCES games(id),
+  team_id       TEXT NOT NULL REFERENCES teams(id),
   player_id     TEXT NOT NULL REFERENCES players(id),
   minutes       REAL    DEFAULT 0,
   fg2_made      INTEGER DEFAULT 0,
@@ -102,6 +104,7 @@ CREATE TABLE IF NOT EXISTS player_game_stats (
 
 export const CREATE_INDEXES = [
   "CREATE INDEX IF NOT EXISTS idx_players_team_id ON players(team_id);",
+  "CREATE UNIQUE INDEX IF NOT EXISTS idx_players_team_number ON players(team_id, number);",
   "CREATE INDEX IF NOT EXISTS idx_games_home_team ON games(home_team_id);",
   "CREATE INDEX IF NOT EXISTS idx_games_away_team ON games(away_team_id);",
   "CREATE INDEX IF NOT EXISTS idx_games_date ON games(game_date);",
@@ -111,11 +114,14 @@ export const CREATE_INDEXES = [
   "CREATE INDEX IF NOT EXISTS idx_game_events_team ON game_events(team_id);",
   "CREATE INDEX IF NOT EXISTS idx_game_events_action ON game_events(action_type);",
   "CREATE INDEX IF NOT EXISTS idx_game_events_quarter ON game_events(game_id, quarter);",
+  "CREATE INDEX IF NOT EXISTS idx_game_events_game_team ON game_events(game_id, team_id);",
   "CREATE INDEX IF NOT EXISTS idx_game_lineups_game ON game_lineups(game_id);",
   "CREATE INDEX IF NOT EXISTS idx_game_lineups_player ON game_lineups(player_id);",
   "CREATE INDEX IF NOT EXISTS idx_game_lineups_game_quarter ON game_lineups(game_id, quarter);",
+  "CREATE INDEX IF NOT EXISTS idx_game_lineups_game_team ON game_lineups(game_id, team_id);",
   "CREATE INDEX IF NOT EXISTS idx_player_game_stats_game ON player_game_stats(game_id);",
   "CREATE INDEX IF NOT EXISTS idx_player_game_stats_player ON player_game_stats(player_id);",
+  "CREATE INDEX IF NOT EXISTS idx_player_game_stats_game_team ON player_game_stats(game_id, team_id);",
   "CREATE UNIQUE INDEX IF NOT EXISTS idx_player_game_stats_unique ON player_game_stats(game_id, player_id);",
 ];
 

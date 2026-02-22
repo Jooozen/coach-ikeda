@@ -31,7 +31,7 @@ export type Position = "PG" | "SG" | "SF" | "PF" | "C";
 export interface Player {
   id: UUID;
   team_id: UUID;
-  name: string;
+  name: string; // 空文字許容（相手チーム選手は背番号のみ可）
   number: number;
   position: Position | null;
   is_active: number; // 0 | 1
@@ -39,7 +39,8 @@ export interface Player {
   updated_at: Timestamp;
 }
 
-export type PlayerInsert = Omit<Player, "id" | "created_at" | "updated_at" | "is_active"> & {
+export type PlayerInsert = Omit<Player, "id" | "created_at" | "updated_at" | "is_active" | "name"> & {
+  name?: string;
   is_active?: number;
 };
 
@@ -137,6 +138,7 @@ export type GameEventUpdate = Partial<
 export interface GameLineup {
   id: UUID;
   game_id: UUID;
+  team_id: UUID;
   player_id: UUID;
   quarter: number;
   check_in_time: string | null;
@@ -155,6 +157,7 @@ export type GameLineupUpdate = Partial<Omit<GameLineup, "id">>;
 export interface PlayerGameStats {
   id: UUID;
   game_id: UUID;
+  team_id: UUID;
   player_id: UUID;
   minutes: number;
   fg2_made: number;
@@ -194,3 +197,13 @@ export type PlayerGameStatsInsert = Omit<PlayerGameStats, "id"> & {
 };
 
 export type PlayerGameStatsUpdate = Partial<Omit<PlayerGameStats, "id">>;
+
+// --- 表示用ヘルパー ---
+
+/** 選手の表示名を返す。名前があれば "#7 佐藤"、なければ "#7" */
+export function getPlayerDisplayName(player: Player): string {
+  if (player.name) {
+    return `#${player.number} ${player.name}`;
+  }
+  return `#${player.number}`;
+}

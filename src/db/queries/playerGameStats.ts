@@ -16,6 +16,7 @@ export async function upsertPlayerGameStats(
   const stats: PlayerGameStats = {
     id,
     game_id: data.game_id,
+    team_id: data.team_id,
     player_id: data.player_id,
     minutes: data.minutes ?? 0,
     fg2_made: data.fg2_made ?? 0,
@@ -38,12 +39,13 @@ export async function upsertPlayerGameStats(
   // UPSERT: game_id + player_id のユニーク制約を利用
   await db.runAsync(
     `INSERT INTO player_game_stats
-      (id, game_id, player_id, minutes,
+      (id, game_id, team_id, player_id, minutes,
        fg2_made, fg2_attempted, fg3_made, fg3_attempted,
        ft_made, ft_attempted, off_rebounds, def_rebounds,
        assists, steals, blocks, turnovers, fouls, plus_minus, points)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(game_id, player_id) DO UPDATE SET
+       team_id = excluded.team_id,
        minutes = excluded.minutes,
        fg2_made = excluded.fg2_made,
        fg2_attempted = excluded.fg2_attempted,
@@ -61,7 +63,7 @@ export async function upsertPlayerGameStats(
        plus_minus = excluded.plus_minus,
        points = excluded.points;`,
     [
-      stats.id, stats.game_id, stats.player_id, stats.minutes,
+      stats.id, stats.game_id, stats.team_id, stats.player_id, stats.minutes,
       stats.fg2_made, stats.fg2_attempted, stats.fg3_made, stats.fg3_attempted,
       stats.ft_made, stats.ft_attempted, stats.off_rebounds, stats.def_rebounds,
       stats.assists, stats.steals, stats.blocks, stats.turnovers,
@@ -77,6 +79,17 @@ export async function getStatsByGameId(gameId: string): Promise<PlayerGameStats[
   return db.getAllAsync<PlayerGameStats>(
     "SELECT * FROM player_game_stats WHERE game_id = ? ORDER BY points DESC;",
     [gameId]
+  );
+}
+
+export async function getStatsByGameAndTeam(
+  gameId: string,
+  teamId: string
+): Promise<PlayerGameStats[]> {
+  const db = await getDatabase();
+  return db.getAllAsync<PlayerGameStats>(
+    "SELECT * FROM player_game_stats WHERE game_id = ? AND team_id = ? ORDER BY points DESC;",
+    [gameId, teamId]
   );
 }
 
@@ -107,6 +120,7 @@ export async function updatePlayerGameStats(
   const fields: string[] = [];
   const values: SQLiteBindValue[] = [];
 
+  if (data.team_id !== undefined) { fields.push("team_id = ?"); values.push(data.team_id); }
   if (data.minutes !== undefined) { fields.push("minutes = ?"); values.push(data.minutes); }
   if (data.fg2_made !== undefined) { fields.push("fg2_made = ?"); values.push(data.fg2_made); }
   if (data.fg2_attempted !== undefined) { fields.push("fg2_attempted = ?"); values.push(data.fg2_attempted); }
@@ -140,7 +154,8 @@ export async function deleteStatsByGameId(gameId: string): Promise<void> {
  */
 export async function recalculateStatsFromEvents(
   gameId: string,
-  playerId: string
+  playerId: string,
+  teamId: string
 ): Promise<void> {
   const db = await getDatabase();
 
@@ -184,6 +199,7 @@ export async function recalculateStatsFromEvents(
 
   await upsertPlayerGameStats({
     game_id: gameId,
+    team_id: teamId,
     player_id: playerId,
     minutes: 0,
     fg2_made: row.fg2_made,

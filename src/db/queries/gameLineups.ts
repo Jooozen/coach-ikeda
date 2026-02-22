@@ -14,6 +14,7 @@ export async function createGameLineup(data: GameLineupInsert): Promise<GameLine
   const lineup: GameLineup = {
     id,
     game_id: data.game_id,
+    team_id: data.team_id,
     player_id: data.player_id,
     quarter: data.quarter,
     check_in_time: data.check_in_time ?? null,
@@ -23,10 +24,10 @@ export async function createGameLineup(data: GameLineupInsert): Promise<GameLine
 
   await db.runAsync(
     `INSERT INTO game_lineups
-      (id, game_id, player_id, quarter, check_in_time, check_out_time, is_starter)
-     VALUES (?, ?, ?, ?, ?, ?, ?);`,
+      (id, game_id, team_id, player_id, quarter, check_in_time, check_out_time, is_starter)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
     [
-      lineup.id, lineup.game_id, lineup.player_id, lineup.quarter,
+      lineup.id, lineup.game_id, lineup.team_id, lineup.player_id, lineup.quarter,
       lineup.check_in_time, lineup.check_out_time, lineup.is_starter,
     ]
   );
@@ -39,6 +40,17 @@ export async function getLineupsByGameId(gameId: string): Promise<GameLineup[]> 
   return db.getAllAsync<GameLineup>(
     "SELECT * FROM game_lineups WHERE game_id = ? ORDER BY quarter ASC, is_starter DESC;",
     [gameId]
+  );
+}
+
+export async function getLineupsByGameAndTeam(
+  gameId: string,
+  teamId: string
+): Promise<GameLineup[]> {
+  const db = await getDatabase();
+  return db.getAllAsync<GameLineup>(
+    "SELECT * FROM game_lineups WHERE game_id = ? AND team_id = ? ORDER BY quarter ASC, is_starter DESC;",
+    [gameId, teamId]
   );
 }
 
@@ -66,6 +78,7 @@ export async function updateGameLineup(id: string, data: GameLineupUpdate): Prom
   const fields: string[] = [];
   const values: SQLiteBindValue[] = [];
 
+  if (data.team_id !== undefined) { fields.push("team_id = ?"); values.push(data.team_id); }
   if (data.quarter !== undefined) { fields.push("quarter = ?"); values.push(data.quarter); }
   if (data.check_in_time !== undefined) { fields.push("check_in_time = ?"); values.push(data.check_in_time); }
   if (data.check_out_time !== undefined) { fields.push("check_out_time = ?"); values.push(data.check_out_time); }

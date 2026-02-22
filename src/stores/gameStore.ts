@@ -158,6 +158,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     for (const playerId of s.starterIds) {
       await createGameLineup({
         game_id: game.id,
+        team_id: homeTeamId,
         player_id: playerId,
         quarter: 1,
         check_in_time: `${String(s.quarterMinutes).padStart(2, "0")}:00`,
